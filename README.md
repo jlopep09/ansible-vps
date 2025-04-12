@@ -2,9 +2,9 @@
 Proyecto ansible para automatizar configuraciones en un servidor VPS
 
 La idea de este proyecto es preparar un servidor vps con las siguientes características
-    - Sistema operativo Ubuntu recien creado
-    - El vps cuenta con ip pública IPv4 y nos da un usuario con permisos root
-    - Una vez configurado podremos hostear cualquier aplicación basada en docker haciendo uso de watchtower
+- Sistema operativo Ubuntu recien creado
+- El vps cuenta con ip pública IPv4 y nos da un usuario con permisos root
+- Una vez configurado podremos hostear cualquier aplicación basada en docker haciendo uso de watchtower
 
 ## Quickstart
 
