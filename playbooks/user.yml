@@ -1,0 +1,39 @@
+---
+- name: Configurar usuarios VPS
+  hosts: vps
+  become: yes
+  vars_files:
+    - ./../group_vars/user.yml
+
+  tasks:
+      - name: Crear el usuario
+        user:
+          name: "{{ username }}"
+          shell: /bin/bash
+          groups: sudo
+          append: yes
+          create_home: yes
+          state: present
+
+      - name: Crear el directorio .ssh
+        file:
+          path: "/home/{{ username }}/.ssh"
+          state: directory
+          mode: '0700'
+          owner: "{{ username }}"
+          group: "{{ username }}"
+
+      - name: Añadir clave pública autorizada
+        copy:
+          content: "{{ ssh_public_key }}"
+          dest: "/home/{{ username }}/.ssh/authorized_keys"
+          mode: '0600'
+          owner: "{{ username }}"
+          group: "{{ username }}"
+
+      - name: Permitir sudo sin contraseña (opcional y sensible)
+        lineinfile:
+          path: "/etc/sudoers.d/{{ username }}"
+          create: yes
+          line: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
+          mode: '0440'

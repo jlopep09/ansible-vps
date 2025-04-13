@@ -1,0 +1,36 @@
+---
+- name: Configurar ufw
+  hosts: vps
+  become: yes
+
+  vars:
+    allowed_ports:
+      - 22       
+      - 80       
+      - 443           
+
+  tasks:
+    - name: Asegurarse de que UFW esté instalado
+      apt:
+        name: ufw
+        state: present
+        update_cache: yes
+
+    - name: Permitir tráfico por puerto SSH
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Permitir puertos necesarios para los servicios
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop: "{{ allowed_ports }}"
+      when: item != 22
+
+    - name: Habilitar UFW (si aún no está activo)
+      ufw:
+        state: enabled
+        policy: deny

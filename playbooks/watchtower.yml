@@ -1,0 +1,15 @@
+---
+- name: Configurar Watchtower
+  hosts: vps
+  become: yes
+
+  tasks:
+    - name: Lanzar Watchtower
+      shell: |
+        docker rm -f watchtower || true
+        docker run -d --name watchtower \
+          --restart always \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          containrrr/watchtower \
+          --cleanup --interval 30
+          

@@ -1,0 +1,32 @@
+---
+- name: Configurar ssh
+  hosts: vps
+  become: yes
+
+  tasks:
+
+    - name: Desactivar acceso SSH como root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin\s+'
+        line: 'PermitRootLogin no'
+        backup: yes
+
+    - name: Desactivar autenticación por contraseña SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication\s+'
+        line: 'PasswordAuthentication no'
+        backup: yes
+
+    - name: Asegurar que ChallengeResponseAuthentication esté desactivado
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ChallengeResponseAuthentication\s+'
+        line: 'ChallengeResponseAuthentication no'
+        backup: yes
+
+    - name: Reiniciar servicio SSH
+      service:
+        name: ssh
+        state: restarted

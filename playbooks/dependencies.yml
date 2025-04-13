@@ -1,0 +1,28 @@
+---
+- name: Configurar dependencias
+  hosts: vps
+  become: yes
+
+  tasks:
+    - name: Instalar dependencias básicas
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - ufw
+        - curl
+        - ca-certificates
+        - gnupg
+        - lsb-release
+        
+    - name: Instalar dependencias de Python (requests, pip)
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - python3-pip
+        - python3-requests
+          

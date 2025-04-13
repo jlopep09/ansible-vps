@@ -1,0 +1,47 @@
+---
+- name: Configurar Docker
+  hosts: vps
+  become: yes
+
+  tasks:
+    - name: Crear carpeta para llaves de Docker
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Descargar GPG key de Docker ya como .gpg
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.gpg
+        mode: '0644'
+    - name: Crear archivo docker.list para apt con clave
+      copy:
+        dest: /etc/apt/sources.list.d/docker.list
+        content: |
+          deb [trusted=yes] https://download.docker.com/linux/ubuntu jammy stable
+    - name: Actualizar caché de apt
+      apt:
+        update_cache: yes
+    - name: Añadir el repo oficial de Docker
+      shell: |
+        echo \
+          "deb [trusted=yes] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    - name: Instalar Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Iniciar Docker al arrancar
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
