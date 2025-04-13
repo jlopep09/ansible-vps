@@ -1,1 +1,3 @@
 vps.yml
+group_vars/dockerhub.yml
+group_vars/user.yml

@@ -1,0 +1,2 @@
+username: user1
+ssh_public_key: "ssh-rsa keyxxxxxxxx== user@host"
