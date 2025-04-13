@@ -1,0 +1,33 @@
+---
+- name: Configurar despliegue de tus servicios
+  hosts: vps
+  become: yes
+  vars_files:
+    - ./../group_vars/dockerhub.yml
+
+  tasks:
+    # Iniciar sesión en DockerHub
+    - name: Iniciar sesión en DockerHub
+      shell: echo "{{ docker_pass }}" | docker login -u "{{ docker_user }}" --password-stdin
+
+    # Crear las redes Docker necesarias
+    - name: Crear red Docker mariadb_network si no existe
+      docker_network:
+        name: mariadb_network
+        state: present
+
+    # Lanzar servicio DB (MariaDB)
+    - name: Lanzar servicio db (MariaDB)
+      docker_container:
+        name: mariadb
+        image: mariadb:latest
+        state: started
+        restart_policy: always
+        networks:
+          - name: mariadb_network
+        exposed_ports:
+          - "3306"
+        published_ports:
+          - "3306:3306"
+        env:
+          MARIADB_ROOT_PASSWORD: "{{ mariadb_root_password | default('123456') }}"
