@@ -3,6 +3,8 @@ La idea de este proyecto es configurar de forma atomatizada un servidor VPS para
 
 Si no dispones de un proyecto en particular que desplegar puedes probar el codigo con el ejemplo de base de datos MariaDB que se incluye en el código. No puedo confirmarlo pero creo que puedes usar este mismo proyecto en una máquina virtual que tengas en tu localhost si quieres probar el código sin contratar una VPS.
 
+He desarrollado una guía más detallada en el siguiente enlace --> [Guía](https://app.gitbook.com/o/zhiwD9T7aIpHje3tHOwR/s/RDpGUpgtYFiJN3RSO60J/guias/configura-tu-vps-para-ci-cd) 
+
 Prerrequisitos de VPS:
 - Sistema operativo Ubuntu recien creado
 - El vps cuenta con ip pública IPv4 y nos da un usuario con permisos root
