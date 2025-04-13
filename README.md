@@ -13,19 +13,19 @@ La idea de este proyecto es preparar un servidor vps con las siguientes caracter
 ssh -i ~/.ssh/clavesshprivada root@ipVps
 ```
 
-1. Crea el archivo group_vars/vps.yml
-2. Introduce el siguiente contenido configurado con tus datos particulares
-```
-docker_user: "mi_usuario_de_docker"
-docker_pass: "mi_contraseña_super_secreta"
-```
-3. Configura los datos de tu vps en el archivo inventory.ini
-4. Modifica el playbook.yml con los servicios que quieras desplegar y las confuraciones extra que desees realizar.
+2. Configura los archivos del directorio group_vars eliminando el prefijo example- y modificando los valores con tus datos
+3. Configura los datos de tu vps en los archivos inventory.ini y inventory_root.ini
+4. Modifica el archivo playbooks/yourapp.yml con los servicios que quieras desplegar y las confuraciones extra que desees realizar.
 5. Ejecuta el proyecto con los siguientes comandos
+El primer comando creará un usuario con los permisos necesarios
 ```
 ansible-playbook step1.yml -i inventory_root.ini --ask-pass
 ```
+El segundo comando configurará ssh para hacer mas seguras las conexiones
 ```
 ansible-playbook step2.yml -i inventory.ini --private-key ~/.ssh/clavesshprivada
+```
+El tercer comando instalará dependencias y configurará los servicios
+```
 ansible-playbook step3.yml -i inventory.ini --private-key ~/.ssh/clavesshprivada
 ```
