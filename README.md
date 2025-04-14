@@ -1,6 +1,6 @@
 # Configure your VPS with Ansible
 
-[Ver este README en español](./README.md)
+[Ver este README en español](./README.es.md)
 
 The idea of this project is to automatically configure a VPS server to host services based on Docker images. The server will detect when you upload a new image of your services to DockerHub and perform a new deployment. The goal is to configure everything automatically in a short time so you can focus on developing your projects without having to think too much about infrastructure. This alternative allows you to deploy your projects more economically compared to dedicated hosting services.
 
@@ -8,9 +8,10 @@ The idea of this project is to automatically configure a VPS server to host serv
 
 If you don't have a particular project to deploy, you can test the code with the MariaDB database example included in the code (I've chosen not to expose the ports, you can modify this in the yourapp.yml playbook). I've also configured a reverse proxy (Traefik) so that if you add a web service, it will automatically provide HTTPS certification.
 
+> I've detailed some steps a bit more in the following guide --> [Guide](https://app.gitbook.com/o/zhiwD9T7aIpHje3tHOwR/s/RDpGUpgtYFiJN3RSO60J/guias/configura-tu-vps-para-ci-cd)
+
 *I can't confirm it, but I believe you can use this same project on a virtual machine that you have on your localhost if you want to test the code without hiring a VPS.*
 
-> I've detailed some steps a bit more in the following guide --> [Guide](https://app.gitbook.com/o/zhiwD9T7aIpHje3tHOwR/s/RDpGUpgtYFiJN3RSO60J/guias/configura-tu-vps-para-ci-cd)
 
 VPS prerequisites:
 - Freshly created Ubuntu operating system
