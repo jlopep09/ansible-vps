@@ -2,3 +2,6 @@ vps.yml
 group_vars/dockerhub.yml
 group_vars/user.yml
 playbooks/greenhouse.yml
+playbooks/greenhouse-db.yml
+group_vars/greenhouse.yml
+resources/init.sql
