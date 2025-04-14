@@ -1,9 +1,11 @@
 # ansible-vps
 La idea de este proyecto es configurar de forma atomatizada un servidor VPS para hostear servicios basados en imagenes docker. El servidor detectará cuando subes una nueva imagen de tus servicios a dockerhub y hará un nuevo despliegue. El objetivo es configurarlo todo de forma automática en poco tiempo para centrarte en desarrollar tus proyectos sin tener que pensar en la infraestructura en exceso. Esta alternativa te permite desplegar tus proyectos de forma más económica respecto a servicios de hosting dedicados. 
 
-Si no dispones de un proyecto en particular que desplegar puedes probar el codigo con el ejemplo de base de datos MariaDB que se incluye en el código. No puedo confirmarlo pero creo que puedes usar este mismo proyecto en una máquina virtual que tengas en tu localhost si quieres probar el código sin contratar una VPS.
+Si no dispones de un proyecto en particular que desplegar puedes probar el codigo con el ejemplo de base de datos MariaDB que se incluye en el código (he optado por no exponer los puertos, puedes modificarlo en el playbook yourapp.yml). Además he configurado un proxy inverso (traefik) para que si agregas un servicio web te de certificado https automáticamente.
 
-He desarrollado una guía más detallada en el siguiente enlace --> [Guía](https://app.gitbook.com/o/zhiwD9T7aIpHje3tHOwR/s/RDpGUpgtYFiJN3RSO60J/guias/configura-tu-vps-para-ci-cd) 
+No puedo confirmarlo pero creo que puedes usar este mismo proyecto en una máquina virtual que tengas en tu localhost si quieres probar el código sin contratar una VPS.
+
+He detallado algunos pasos un poco más en la siguiente guía --> [Guía](https://app.gitbook.com/o/zhiwD9T7aIpHje3tHOwR/s/RDpGUpgtYFiJN3RSO60J/guias/configura-tu-vps-para-ci-cd) 
 
 Prerrequisitos de VPS:
 - Sistema operativo Ubuntu recien creado
