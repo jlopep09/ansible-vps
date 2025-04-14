@@ -7,7 +7,8 @@
     allowed_ports:
       - 22       
       - 80       
-      - 443           
+      - 443 
+     
 
   tasks:
     - name: Asegurarse de que UFW esté instalado
@@ -29,6 +30,14 @@
         proto: tcp
       loop: "{{ allowed_ports }}"
       when: item != 22
+
+    - name: Configurar políticas por defecto de UFW
+      ansible.builtin.command: >
+        ufw default {{ item.policy }} {{ item.direction }}
+      loop:
+        - { policy: 'deny', direction: 'incoming' }
+        - { policy: 'allow', direction: 'outgoing' }
+      tags: ufw
 
     - name: Habilitar UFW (si aún no está activo)
       ufw:

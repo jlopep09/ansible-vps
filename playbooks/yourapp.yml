@@ -1,20 +1,15 @@
 ---
-- name: Configurar despliegue de tus servicios
+- name: Configurar depliegue de una base de datos
   hosts: vps
   become: yes
   vars_files:
     - ./../group_vars/dockerhub.yml
+    - ./../group_vars/mariadb.yml
 
   tasks:
     # Iniciar sesión en DockerHub
     - name: Iniciar sesión en DockerHub
       shell: echo "{{ docker_pass }}" | docker login -u "{{ docker_user }}" --password-stdin
-
-    # Crear las redes Docker necesarias
-    - name: Crear red Docker mariadb_network si no existe
-      docker_network:
-        name: mariadb_network
-        state: present
 
     # Lanzar servicio DB (MariaDB)
     - name: Lanzar servicio db (MariaDB)
@@ -23,11 +18,35 @@
         image: mariadb:latest
         state: started
         restart_policy: always
-        networks:
-          - name: mariadb_network
-        exposed_ports:
-          - "3306"
-        published_ports:
-          - "3306:3306"
         env:
-          MARIADB_ROOT_PASSWORD: "{{ mariadb_root_password | default('123456') }}"
+          MARIADB_ROOT_PASSWORD: "{{ mariadb_root_password }}"
+
+    - name: Esperar a que MariaDB esté listo (usando mariadb-admin dentro del contenedor)
+      shell: |
+        until docker exec mariadb mariadb-admin ping -hlocalhost -uroot -p{{ mariadb_root_password }} --silent; do
+          sleep 2
+        done
+      retries: 30
+      delay: 5
+      register: mariadb_ready
+      until: mariadb_ready.rc == 0
+
+    - name: Copiar script SQL al VPS
+      copy:
+        src: /route/to/example/sqlscript/init.sql  # Ruta en tu máquina local
+        dest: /tmp/init.sql # Ruta en el VPS
+      become: yes
+      become_method: sudo
+
+    - name: Copiar script SQL al contenedor
+      community.docker.docker_container_copy_into:
+        container: mariadb
+        path: /tmp/init.sql  # Ruta en el VPS
+        container_path: /tmp/init.sql # Ruta en el contenedor de mariadb
+
+    - name: Ejecutar script SQL dentro del contenedor
+      shell: docker exec mariadb mariadb -uroot -p{{ mariadb_root_password }} -e "source /tmp/init.sql"
+      args:
+        executable: /bin/bash
+
+

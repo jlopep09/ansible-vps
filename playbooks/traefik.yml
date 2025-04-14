@@ -1,0 +1,67 @@
+---
+- name: Configurar traefik como proxy inverso y certificador https
+  hosts: vps
+  become: yes
+
+  tasks:
+    - name: Crear directorio para Traefik
+      file:
+        path: /opt/traefik
+        state: directory
+        mode: '0755'
+
+    - name: Crear archivo de configuración traefik.yml
+      copy:
+        dest: /opt/traefik/traefik.yml
+        content: |
+          entryPoints:
+            web:
+              address: ":80"
+            websecure:
+              address: ":443"
+
+          providers:
+            docker:
+              exposedByDefault: false
+
+          certificatesResolvers:
+            letsencrypt:
+              acme:
+                email: name@email.com
+                storage: /letsencrypt/acme.json
+                httpChallenge:
+                  entryPoint: web
+        mode: '0644'
+
+    - name: Crear archivo acme.json
+      copy:
+        dest: /opt/traefik/acme.json
+        content: ""
+        mode: '0600'
+
+    - name: Crear red Docker traefik_proxy
+      docker_network:
+        name: traefik_proxy
+        driver: bridge
+        state: present
+
+    - name: Lanzar contenedor de Traefik
+      docker_container:
+        name: traefik
+        image: traefik:v3.3.5
+        command:
+          - "--configFile=/etc/traefik/traefik.yml"
+        state: started
+        restart_policy: always
+        ports:
+          - "80:80"
+          - "443:443"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /opt/traefik/traefik.yml:/etc/traefik/traefik.yml
+          - /opt/traefik/acme.json:/letsencrypt/acme.json
+        networks:
+          - name: traefik_proxy
+
+
+

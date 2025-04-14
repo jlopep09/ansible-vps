@@ -1,5 +1,6 @@
 - import_playbook: playbooks/dependencies.yml
 - import_playbook: playbooks/firewall.yml
 - import_playbook: playbooks/docker.yml
+- import_playbook: playbooks/traefik.yml
 - import_playbook: playbooks/yourapp.yml
 - import_playbook: playbooks/watchtower.yml
