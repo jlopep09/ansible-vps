@@ -46,3 +46,13 @@ Si todos los pasos se han realizado con éxito, podrás conectarte a tu vps y ej
 ```
 sudo docker ps
 ```
+### Ayuda
+
+Para ejecutar este proyecto es necesario tener instalado Ansible. Puedes ver el proceso de instalacion en la pagina oficial de Ansible. A fecha actual, tengo
+entendido que no es posible instalar Ansible directamente en windows (puedo estar equivocado), personalmente he instalado ubuntu virtualizado en windows, instalado 
+ansible con la guia de la pagina oficial para ubuntu y he navegado al directorio del proyecto desde ubuntu con el siguiente comando
+
+```
+//Proyecto contenido en disco D
+cd /mnt/d/rutaProyecto 
+```

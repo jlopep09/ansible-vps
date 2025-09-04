@@ -48,3 +48,12 @@ If all steps have been successfully completed, you will be able to connect to yo
 ```
 sudo docker ps
 ```
+
+### Help
+
+To run this project, you must have Ansible installed. You can see the installation process on the official Ansible website. As of today, I understand that it is not possible to install Ansible directly on Windows (I could be wrong). I personally installed virtualized Ubuntu on Windows, installed Ansible using the guide on the official Ubuntu website, and navigated to the project directory from Ubuntu with the following command:
+
+```
+//Project content on drive D
+cd /mnt/d/projectPath
+```
