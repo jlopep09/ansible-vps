@@ -1,0 +1,44 @@
+---
+- name: Securizar SSH del VPS
+  hosts: vps
+  become: true
+
+  tasks:
+
+    - name: Desactivar acceso SSH como root
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*PermitRootLogin\s+'
+        line: 'PermitRootLogin no'
+        backup: true
+
+    - name: Desactivar autenticación SSH mediante contraseña
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*PasswordAuthentication\s+'
+        line: 'PasswordAuthentication no'
+        backup: true
+
+    - name: Desactivar autenticación keyboard-interactive
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*KbdInteractiveAuthentication\s+'
+        line: 'KbdInteractiveAuthentication no'
+        backup: true
+
+    - name: Desactivar ChallengeResponseAuthentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*ChallengeResponseAuthentication\s+'
+        line: 'ChallengeResponseAuthentication no'
+        backup: true
+
+    - name: Comprobar configuración de SSH
+      ansible.builtin.command:
+        cmd: sshd -t
+      changed_when: false
+
+    - name: Reiniciar SSH
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

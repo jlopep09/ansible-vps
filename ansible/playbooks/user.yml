@@ -1,0 +1,42 @@
+---
+- name: Configurar usuario VPS
+  hosts: vps
+  become: true
+
+  vars_files:
+    - ../group_vars/user.yml
+
+  tasks:
+
+    - name: Crear usuario
+      ansible.builtin.user:
+        name: "{{ username }}"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        create_home: true
+        state: present
+
+    - name: Crear directorio .ssh
+      ansible.builtin.file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        mode: "0700"
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Instalar clave SSH autorizada
+      ansible.builtin.copy:
+        content: "{{ ssh_public_key }}"
+        dest: "/home/{{ username }}/.ssh/authorized_keys"
+        mode: "0600"
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Permitir sudo sin contraseña
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ username }}"
+        content: "{{ username }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"

@@ -13,10 +13,17 @@
     - name: Crear archivo de configuración traefik.yml
       copy:
         dest: /opt/traefik/traefik.yml
+        mode: '0644'
         content: |
           entryPoints:
             web:
               address: ":80"
+              http:
+                redirections:
+                  entryPoint:
+                    to: websecure
+                    scheme: https
+
             websecure:
               address: ":443"
 
@@ -31,7 +38,6 @@
                 storage: /letsencrypt/acme.json
                 httpChallenge:
                   entryPoint: web
-        mode: '0644'
 
     - name: Crear archivo acme.json
       copy:
@@ -44,15 +50,16 @@
         name: traefik_proxy
         driver: bridge
         state: present
-
+        
     - name: Lanzar contenedor de Traefik
       docker_container:
         name: traefik
-        image: traefik:v3.3.5
+        image: traefik:v3.6.16
         command:
           - "--configFile=/etc/traefik/traefik.yml"
         state: started
         restart_policy: always
+        recreate: true
         ports:
           - "80:80"
           - "443:443"

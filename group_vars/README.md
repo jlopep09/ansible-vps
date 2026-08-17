@@ -1,1 +1,0 @@
-Debes eliminar el prefijo example- de los archivos de este directorio y ajustar los valores con tus datos
