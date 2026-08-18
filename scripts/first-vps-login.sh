@@ -84,6 +84,10 @@ trap 'rm -f "$TMP_ERROR"' EXIT
 # Conexión SSH
 # ------------------------------------------------------------
 
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$VPS_IP" 2>/dev/null || true
+
 echo "[INFO] Conectando a ${VPS_ROOT_USER}@${VPS_IP}..."
 
 set +e
@@ -101,6 +105,26 @@ sshpass -p "$VPS_PASSWORD" \
 SSH_EXIT_CODE=$?
 
 set -e
+
+if [[ $SSH_EXIT_CODE -ne 0 ]] && grep -Eq 'REMOTE HOST IDENTIFICATION HAS CHANGED|Host key verification failed' "$TMP_ERROR"; then
+    read -rp "Se detectó un cambio de host key para $VPS_IP. ¿Quieres eliminarlo de ~/.ssh/known_hosts y reintentar? [s/n]: " retry_hostkey
+    if [[ "$retry_hostkey" =~ ^[sS]$ ]]; then
+        ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$VPS_IP" 2>/dev/null || true
+
+        set +e
+        sshpass -p "$VPS_PASSWORD" \
+            ssh \
+                -o StrictHostKeyChecking=accept-new \
+                -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+                -o ConnectTimeout=15 \
+                -o LogLevel=ERROR \
+                "${VPS_ROOT_USER}@${VPS_IP}" \
+                "exit" \
+                2>"$TMP_ERROR"
+        SSH_EXIT_CODE=$?
+        set -e
+    fi
+fi
 
 # ------------------------------------------------------------
 # Resultado

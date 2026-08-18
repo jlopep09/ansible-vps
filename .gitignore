@@ -1,3 +1,28 @@
+# ============================================================
+# Archivos sensibles - NUNCA subir a Git
+# ============================================================
+
+# Configuración (contiene credenciales)
+.env
+.env.local
+.env.*.local
+
+# Claves SSH privadas
+private/
+*.pem
+*.key
+id_ed25519
+id_rsa
+*.pub.bak
+
+# Configuración Ansible generada
+ansible/inventory.ini
+ansible/group_vars/user.yml
+
+# ============================================================
+# Archivos de proyecto heredado (v1)
+# ============================================================
+
 v1/vps.yml
 v1/group_vars/dockerhub.yml
 v1/group_vars/user.yml
@@ -5,7 +30,71 @@ v1/playbooks/greenhouse.yml
 v1/playbooks/greenhouse-db.yml
 v1/group_vars/greenhouse.yml
 v1/resources/init.sql
-.env
-ansible/inventory.ini
-private/*
-ansible/group_vars/user.yml
+
+# ============================================================
+# Archivos de sistema
+# ============================================================
+
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.idea/
+*.iml
+
+# ============================================================
+# Logs
+# ============================================================
+
+*.log
+logs/
+debug-*.log
+
+# ============================================================
+# Archivos temporales
+# ============================================================
+
+tmp/
+temp/
+*.tmp
+*.bak
+
+# ============================================================
+# Directorios de cache
+# ============================================================
+
+__pycache__/
+.pytest_cache/
+.ansible/
+.python-version
+
+# ============================================================
+# Archivos de SSH
+# ============================================================
+
+.ssh/known_hosts
+.ssh/config.local
+
+# ============================================================
+# IDE
+# ============================================================
+
+.vscode/
+.idea/
+*.code-workspace
+
+# ============================================================
+# macOS
+# ============================================================
+
+.AppleDouble
+.LSOverride
+.TemporaryItems
+
+# ============================================================
+# Linux
+# ============================================================
+
+.~lock.*
+*~

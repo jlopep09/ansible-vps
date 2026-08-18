@@ -51,7 +51,6 @@ load_env
 
 require_variable "VPS_IP"
 require_variable "VPS_USER"
-require_variable "SSH_PUBLIC_KEY"
 require_variable "SSH_PRIVATE_KEY"
 
 # ------------------------------------------------------------
@@ -64,9 +63,38 @@ fi
 
 mkdir -p "$GROUP_VARS_DIR"
 
-# ------------------------------------------------------------
-# Comprobar clave pública
-# ------------------------------------------------------------
+# Si la clave pública no existe o no coincide, regenerarla desde la privada.
+# Para claves con passphrase, se requiere que ya esté cargada en ssh-agent.
+SSH_PUBLIC_KEY="${SSH_PUBLIC_KEY:-$(dirname "$SSH_PRIVATE_KEY")/$(basename "$SSH_PRIVATE_KEY").pub}"
+
+if [[ -f "$SSH_PRIVATE_KEY" ]]; then
+    if [[ -f "$HOME/.ssh/agent-env" ]]; then
+        # shellcheck disable=SC1090
+        source "$HOME/.ssh/agent-env" > /dev/null 2>&1 || true
+    fi
+
+    if [[ -n "${SSH_AUTH_SOCK:-}" ]] && [[ -S "${SSH_AUTH_SOCK}" ]] && ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$SSH_PRIVATE_KEY" 2>/dev/null | awk '{print $2}')"; then
+        echo "[INFO] Cargando la clave SSH con passphrase en ssh-agent antes de generar variables..."
+        ssh-add "$SSH_PRIVATE_KEY" >/dev/null 2>&1 || true
+    else
+        if ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$SSH_PRIVATE_KEY" 2>/dev/null | awk '{print $2}')"; then
+            echo "[INFO] La clave privada tiene passphrase o no está cargada. Cargando ahora..."
+            ssh-add "$SSH_PRIVATE_KEY" >/dev/null 2>&1 || true
+        fi
+    fi
+
+    DERIVED_PUBLIC_KEY="$(ssh-keygen -y -f "$SSH_PRIVATE_KEY" 2>/dev/null || true)"
+
+    if [[ -n "$DERIVED_PUBLIC_KEY" ]]; then
+        if [[ ! -f "$SSH_PUBLIC_KEY" ]] || [[ "$(cat "$SSH_PUBLIC_KEY" 2>/dev/null || true)" != "$DERIVED_PUBLIC_KEY" ]]; then
+            printf '%s\n' "$DERIVED_PUBLIC_KEY" > "$SSH_PUBLIC_KEY"
+            chmod 644 "$SSH_PUBLIC_KEY"
+        fi
+    elif [[ -n "${SSH_KEY_PASSPHRASE:-}" ]] && [[ "${SSH_KEY_PASSPHRASE}" == "true" ]]; then
+        echo "[WARN] La clave privada está protegida por passphrase y no está disponible en ssh-agent."
+        echo "[WARN] Cárgala con: ssh-add $SSH_PRIVATE_KEY"
+    fi
+fi
 
 if [[ ! -f "$SSH_PUBLIC_KEY" ]]; then
     error "No existe la clave pública: $SSH_PUBLIC_KEY"
@@ -76,6 +104,19 @@ SSH_PUBLIC_KEY_CONTENT="$(cat "$SSH_PUBLIC_KEY")"
 
 if [[ -z "$SSH_PUBLIC_KEY_CONTENT" ]]; then
     error "La clave pública está vacía: $SSH_PUBLIC_KEY"
+fi
+
+# Persistir siempre la ruta correcta en .env para evitar que se quede desalineada
+if grep -q '^SSH_PUBLIC_KEY=' "$ENV_FILE" 2>/dev/null; then
+    sed -i "s|^SSH_PUBLIC_KEY=.*|SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY}|" "$ENV_FILE"
+else
+    printf '%s=%s\n' "SSH_PUBLIC_KEY" "$SSH_PUBLIC_KEY" >> "$ENV_FILE"
+fi
+
+if grep -q '^SSH_PRIVATE_KEY=' "$ENV_FILE" 2>/dev/null; then
+    sed -i "s|^SSH_PRIVATE_KEY=.*|SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}|" "$ENV_FILE"
+else
+    printf '%s=%s\n' "SSH_PRIVATE_KEY" "$SSH_PRIVATE_KEY" >> "$ENV_FILE"
 fi
 
 # ------------------------------------------------------------

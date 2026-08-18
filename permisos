@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Ajusta permisos para que el proyecto funcione en Ubuntu
+chmod +x ./run.sh ./provision.sh ./scripts/*.sh 2>/dev/null || true
+chmod 700 ./private 2>/dev/null || true
+chmod 600 ./private/* 2>/dev/null || true
+chmod 644 ./private/*.pub 2>/dev/null || true
+
+# Evita que los artefactos Windows de tipo Zone.Identifier interfieran
+rm -f ./private/*.Zone.Identifier 2>/dev/null || true
+
+printf '%s\n' "Permisos ajustados correctamente."

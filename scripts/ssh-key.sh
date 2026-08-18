@@ -53,6 +53,28 @@ save_env_variable() {
 
 save_ssh_configuration() {
     local key_name="$1"
+    local key_path="$PRIVATE_DIR/$key_name"
+    local public_key_path="${key_path}.pub"
+
+    if [[ ! -f "$key_path" ]]; then
+        echo "[ERROR] La clave privada no existe: $key_path"
+        return 1
+    fi
+
+    if [[ ! -f "$public_key_path" ]]; then
+        generate_public_key "$key_path" "$public_key_path"
+    fi
+
+    local derived_public_key
+    derived_public_key="$(ssh-keygen -y -f "$key_path" 2>/dev/null || true)"
+    local stored_public_key
+    stored_public_key="$(cat "$public_key_path")"
+
+    if [[ -n "$derived_public_key" && "$derived_public_key" != "$stored_public_key" ]]; then
+        echo "[WARN] La clave pública no coincidía con la privada. Se regenerará automáticamente."
+        rm -f "$public_key_path"
+        generate_public_key "$key_path" "$public_key_path"
+    fi
 
     save_env_variable "SSH_KEY_NAME" "$key_name"
     save_env_variable "SSH_PRIVATE_KEY" "./private/$key_name"

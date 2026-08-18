@@ -7,9 +7,14 @@ ANSIBLE_DIR="./ansible"
 INVENTORY="$ANSIBLE_DIR/inventory.ini"
 PLAYBOOK="$ANSIBLE_DIR/playbooks/user.yml"
 
-# ------------------------------------------------------------
-# Funciones
-# ------------------------------------------------------------
+# Cargar funciones de ssh-agent
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=ssh-agent-utils.sh
+source "$SCRIPT_DIR/ssh-agent-utils.sh"
+
+# ============================================================
+# FUNCIONES
+# ============================================================
 
 error() {
     echo
@@ -36,19 +41,16 @@ require_variable() {
     fi
 }
 
-# ------------------------------------------------------------
-# Inicio
-# ------------------------------------------------------------
+# ============================================================
+# INICIO
+# ============================================================
 
 echo "========================================="
 echo " Configuración inicial del usuario VPS"
 echo "========================================="
 echo
 
-# ------------------------------------------------------------
 # Cargar .env
-# ------------------------------------------------------------
-
 load_env
 
 require_variable "VPS_IP"
@@ -57,14 +59,7 @@ require_variable "VPS_PASSWORD"
 require_variable "SSH_PRIVATE_KEY"
 require_variable "SSH_PUBLIC_KEY"
 
-# ------------------------------------------------------------
 # Comprobar archivos
-# ------------------------------------------------------------
-
-if [[ ! -f "$INVENTORY" ]]; then
-    error "No existe el inventory de Ansible: $INVENTORY"
-fi
-
 if [[ ! -f "$PLAYBOOK" ]]; then
     error "No existe el playbook: $PLAYBOOK"
 fi
@@ -75,17 +70,58 @@ fi
 
 chmod 600 "$SSH_PRIVATE_KEY"
 
-# ------------------------------------------------------------
-# Ejecutar Ansible
-# ------------------------------------------------------------
+# Asegurar que el inventario y las variables del playbook de usuario existan
+# antes de ejecutarlo. El playbook depende de username y ssh_public_key en ansible/group_vars/user.yml.
+if [[ ! -f "$ANSIBLE_DIR/group_vars/user.yml" ]] || ! grep -q 'username:' "$ANSIBLE_DIR/group_vars/user.yml"; then
+    echo "[INFO] Generando variables de Ansible para el playbook de usuario..."
+    "$SCRIPT_DIR/generate-ansible-vars.sh"
+fi
 
-echo "[INFO] Creando usuario $VPS_USER en el VPS..."
+# Asegurar que el inventario final no quede en un estado antiguo antes del bootstrap
+cat > "$INVENTORY" <<EOF
+[vps]
+$VPS_IP ansible_user=root ansible_port=22
+EOF
+
+# ============================================================
+# Ejecutar Ansible para crear usuario usando root
+# ============================================================
+
+TEMP_INVENTORY="$(mktemp)"
+trap 'rm -f "$TEMP_INVENTORY"' EXIT
+
+cat > "$TEMP_INVENTORY" <<EOF
+[vps]
+$VPS_IP ansible_user=root ansible_port=22
+EOF
+
+echo "[INFO] Inventory temporal de bootstrap:"
+echo
+cat "$TEMP_INVENTORY"
 echo
 
-if ! ansible-playbook \
+echo "========================================="
+echo " Creando usuario VPS"
+echo "========================================="
+echo
+
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$VPS_IP" 2>/dev/null || true
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+
+ echo "[INFO] Conectando como root a $VPS_IP..."
+echo "[INFO] Creando usuario $VPS_USER..."
+echo
+
+if ! ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
     "$PLAYBOOK" \
-    -i "$INVENTORY" \
-    -e "ansible_password=$VPS_PASSWORD"
+    -i "$TEMP_INVENTORY" \
+    -e "ansible_password=$VPS_PASSWORD" \
+    -e "ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts'" \
+    -e "username=$VPS_USER" \
+    -e "ssh_public_key=$(cat "$SSH_PUBLIC_KEY")"
 then
     error "El playbook de creación del usuario ha fallado."
 fi
@@ -93,43 +129,38 @@ fi
 echo
 echo "[OK] Usuario $VPS_USER creado/configurado correctamente."
 
-# ------------------------------------------------------------
-# Comprobar acceso SSH con la nueva clave
-# ------------------------------------------------------------
-
 echo
-echo "========================================="
-echo " Comprobando acceso SSH"
-echo "========================================="
-echo
+echo "[INFO] Instalando la clave pública del usuario $VPS_USER en el servidor..."
 
-SSH_OUTPUT=""
+SSH_PUBLIC_KEY_CONTENT="$(tr -d '\r' < "$SSH_PUBLIC_KEY")"
 
-if ! SSH_OUTPUT=$(
-    ssh \
-        -i "$SSH_PRIVATE_KEY" \
-        -o BatchMode=yes \
-        -o ConnectTimeout=10 \
-        -o StrictHostKeyChecking=accept-new \
-        "$VPS_USER@$VPS_IP" \
-        "echo SSH_CONNECTION_OK" \
-        2>&1
-); then
-
-    echo "$SSH_OUTPUT"
-
-    error "No se ha podido acceder al VPS como $VPS_USER mediante la nueva clave SSH."
+if ! sshpass -p "$VPS_PASSWORD" ssh \
+    -o StrictHostKeyChecking=accept-new \
+    -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+    -o ConnectTimeout=15 \
+    -o LogLevel=ERROR \
+    "root@$VPS_IP" \
+    "bash -lc 'install -d -m 700 -o $VPS_USER -g $VPS_USER /home/$VPS_USER/.ssh; printf %s \"$SSH_PUBLIC_KEY_CONTENT\\n\" > /home/$VPS_USER/.ssh/authorized_keys; chown $VPS_USER:$VPS_USER /home/$VPS_USER/.ssh/authorized_keys; chmod 600 /home/$VPS_USER/.ssh/authorized_keys'"
+then
+    error "No se pudo instalar la clave pública autorizada para $VPS_USER."
 fi
 
-echo "$SSH_OUTPUT"
+echo "[OK] Clave pública instalada correctamente en el servidor."
 
-if [[ "$SSH_OUTPUT" != *"SSH_CONNECTION_OK"* ]]; then
-    error "La conexión SSH no ha devuelto la confirmación esperada."
-fi
+# Actualizar inventory para usar el usuario no-root
+echo
+echo "[INFO] Actualizando inventory de Ansible..."
 
-# ------------------------------------------------------------
-# Resultado
-# ------------------------------------------------------------
+cat > "$INVENTORY" <<EOF
+[vps]
+$VPS_IP ansible_user=$VPS_USER ansible_port=22
+EOF
+
+echo "[OK] Inventory actualizado."
+
+# ============================================================
+# RESULTADO
+# ============================================================
 
 echo
 echo "========================================="
@@ -137,5 +168,5 @@ echo " Bootstrap completado correctamente"
 echo "========================================="
 echo
 echo "[OK] Usuario: $VPS_USER"
-echo "[OK] Acceso SSH mediante clave verificado."
-echo
+echo "[OK] Clave SSH instalada en el servidor."
+echo "[OK] Inventory configurado para $VPS_USER."

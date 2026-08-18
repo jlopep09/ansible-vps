@@ -173,11 +173,21 @@ INVENTORY_FILE_ABSOLUTE="$(realpath "$INVENTORY_FILE")"
 
 echo "[INFO] Comprobando acceso SSH como $VPS_USER@$VPS_IP..."
 
+# Asegurar que la clave esté cargada en ssh-agent para poder usarse cuando tenga passphrase.
+if ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$SSH_PRIVATE_KEY_ABSOLUTE" 2>/dev/null | awk '{print $2}')"; then
+    echo "[INFO] Cargando clave SSH en ssh-agent..."
+    echo "[INFO] Si la clave tiene passphrase, introdúcela cuando se solicite; se verá al escribirla."
+    ssh-add "$SSH_PRIVATE_KEY_ABSOLUTE" || {
+        echo "[ERROR] No se pudo cargar la clave SSH en ssh-agent."
+        echo "[ERROR] Revisa que la ruta y la passphrase son correctas."
+        exit 1
+    }
+fi
+
 SSH_ERROR="$(mktemp)"
 
 if ssh \
     -i "$SSH_PRIVATE_KEY_ABSOLUTE" \
-    -o BatchMode=yes \
     -o StrictHostKeyChecking=accept-new \
     -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
     -o ConnectTimeout=15 \
