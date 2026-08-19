@@ -110,6 +110,7 @@ print_header "4. Playbooks Ansible"
 playbooks_check=(
     "ansible/playbooks/user.yml"
     "ansible/playbooks/docker.yml"
+    "ansible/playbooks/ghcr-login.yml"
     "ansible/playbooks/traefik.yml"
     "ansible/playbooks/firewall.yml"
     "ansible/playbooks/ssh.yml"

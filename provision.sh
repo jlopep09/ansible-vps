@@ -58,6 +58,88 @@ load_env() {
     set +a
 }
 
+save_env_variable() {
+    local variable="$1"
+    local value="$2"
+
+    touch "$ENV_FILE"
+    chmod 600 "$ENV_FILE"
+
+    if grep -q "^${variable}=" "$ENV_FILE" 2>/dev/null; then
+        sed -i "s|^${variable}=.*|${variable}=${value}|" "$ENV_FILE"
+    else
+        printf '%s=%s\n' "$variable" "$value" >> "$ENV_FILE"
+    fi
+
+    export "${variable}=${value}"
+}
+
+ask_yes_no() {
+    local prompt="$1"
+
+    while true; do
+        read -rp "$prompt [s/N]: " answer
+
+        case "${answer,,}" in
+            s|si|sí|y|yes)
+                return 0
+                ;;
+            ""|n|no)
+                return 1
+                ;;
+            *)
+                print_warning "Respuesta no válida. Introduce 's' o 'n'."
+                ;;
+        esac
+    done
+}
+
+ensure_ghcr_variables() {
+    local updated="false"
+
+    if [[ -z "${GHCR_REGISTRY:-}" ]]; then
+        GHCR_REGISTRY="ghcr.io"
+        save_env_variable "GHCR_REGISTRY" "$GHCR_REGISTRY"
+        updated="true"
+        print_info "GHCR_REGISTRY no estaba definida. Se usará ghcr.io"
+    fi
+
+    if [[ -z "${GHCR_USERNAME:-}" ]]; then
+        read -rp "Usuario de GitHub para GHCR (GHCR_USERNAME): " GHCR_USERNAME
+        if [[ -z "${GHCR_USERNAME}" ]]; then
+            error "GHCR_USERNAME es obligatoria para iniciar sesión en GHCR"
+        fi
+        save_env_variable "GHCR_USERNAME" "$GHCR_USERNAME"
+        updated="true"
+    fi
+
+    if [[ -z "${GHCR_TOKEN:-}" ]]; then
+        echo
+        read -rsp "Token de GitHub para GHCR (GHCR_TOKEN): " GHCR_TOKEN
+        echo
+        if [[ -z "${GHCR_TOKEN}" ]]; then
+            error "GHCR_TOKEN es obligatoria para iniciar sesión en GHCR"
+        fi
+        save_env_variable "GHCR_TOKEN" "$GHCR_TOKEN"
+        updated="true"
+    fi
+
+    if [[ "$updated" == "true" ]]; then
+        print_success "Variables de GHCR guardadas en $ENV_FILE"
+    else
+        print_info "Variables GHCR ya presentes en $ENV_FILE"
+    fi
+}
+
+docker_post_install_flow() {
+    if ask_yes_no "¿Deseas iniciar sesión en GHCR para usar imágenes privadas?"; then
+        ensure_ghcr_variables
+        run_playbook "Login en GHCR" "ghcr-login.yml"
+    else
+        print_info "Se omitió el login en GHCR"
+    fi
+}
+
 require_variable() {
     local variable="$1"
     local description="${2:-$variable}"
@@ -221,6 +303,7 @@ while true; do
             ;;
         2)
             run_playbook "Docker" "docker.yml"
+            docker_post_install_flow
             ;;
         3)
             run_playbook "Firewall" "firewall.yml"

@@ -1,0 +1,27 @@
+---
+- name: Iniciar sesion en GHCR
+  hosts: vps
+  become: yes
+
+  vars:
+    ghcr_registry: "{{ lookup('env', 'GHCR_REGISTRY') | default('ghcr.io', true) }}"
+    ghcr_username: "{{ lookup('env', 'GHCR_USERNAME') }}"
+    ghcr_token: "{{ lookup('env', 'GHCR_TOKEN') }}"
+
+  tasks:
+    - name: Validar variables requeridas para GHCR
+      ansible.builtin.assert:
+        that:
+          - ghcr_registry | length > 0
+          - ghcr_username | length > 0
+          - ghcr_token | length > 0
+        fail_msg: "Faltan variables GHCR_REGISTRY, GHCR_USERNAME o GHCR_TOKEN"
+
+    - name: Iniciar sesion en GHCR con Docker CLI
+      ansible.builtin.command: "docker login {{ ghcr_registry }} --username {{ ghcr_username }} --password-stdin"
+      args:
+        stdin: "{{ ghcr_token }}"
+      register: ghcr_login_result
+      changed_when: "'Login Succeeded' in ghcr_login_result.stdout"
+      failed_when: ghcr_login_result.rc != 0
+      no_log: true
