@@ -54,6 +54,8 @@ print_header "Verificación de Configuración del Proyecto"
 print_header "1. Estructura de Directorios"
 
 [[ -d "scripts" ]] && check_passed "Directorio scripts/" || check_failed "Falta scripts/"
+[[ -d "scripts/bash/run" ]] && check_passed "Directorio scripts/bash/run/" || check_failed "Falta scripts/bash/run/"
+[[ -d "scripts/bash/provision" ]] && check_passed "Directorio scripts/bash/provision/" || check_failed "Falta scripts/bash/provision/"
 [[ -d "ansible" ]] && check_passed "Directorio ansible/" || check_failed "Falta ansible/"
 [[ -d "private" ]] && check_passed "Directorio private/" || check_warning "Directorio private/ (se creará automáticamente)"
 [[ -f "run.sh" ]] && check_passed "Archivo run.sh" || check_failed "Falta run.sh"
@@ -66,14 +68,14 @@ print_header "1. Estructura de Directorios"
 print_header "2. Scripts Principales"
 
 scripts_check=(
-    "scripts/check-deps.sh"
-    "scripts/first-vps-login.sh"
-    "scripts/ssh-key.sh"
-    "scripts/user-config.sh"
-    "scripts/secure-ssh.sh"
-    "scripts/generate-ansible-vars.sh"
-    "scripts/bootstrap-user.sh"
-    "scripts/interactive-setup.sh"
+    "scripts/bash/run/01-check-deps.sh"
+    "scripts/bash/run/03-first-vps-login.sh"
+    "scripts/bash/provision/ssh-key.sh"
+    "scripts/bash/run/04-user-config.sh"
+    "scripts/bash/run/07-secure-ssh.sh"
+    "scripts/bash/run/05-generate-ansible-vars.sh"
+    "scripts/bash/run/06-bootstrap-user.sh"
+    "scripts/bash/run/02-interactive-setup.sh"
 )
 
 for script in "${scripts_check[@]}"; do

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ENV_FILE="./.env"
-SCRIPTS_DIR="./scripts"
+SCRIPTS_DIR="./scripts/bash/run"
 
 # ============================================================
 # CONFIGURACIÓN DE COLORES
@@ -181,10 +181,10 @@ while true; do
             
             if [[ "$confirm" =~ ^[sS]$ ]]; then
                 # Verificar dependencias
-                run_script "check-deps.sh" "Verificar dependencias"
+                run_script "01-check-deps.sh" "Verificar dependencias"
                 
                 # Configuración interactiva
-                run_script "interactive-setup.sh" "Configuración interactiva (.env)"
+                run_script "02-interactive-setup.sh" "Configuración interactiva (.env)"
                 
                 # Cargar configuración
                 load_env
@@ -203,20 +203,20 @@ while true; do
                 fi
 
                 # Primer acceso
-                run_script "first-vps-login.sh" "Primer acceso al servidor (root)"
+                run_script "03-first-vps-login.sh" "Primer acceso al servidor (root)"
                 
                 # Configurar el usuario que se quiere crear en el VPS
-                run_script "user-config.sh" "Crear usuario no-root"
+                run_script "04-user-config.sh" "Crear usuario no-root"
                 
                 # Generar primero el inventario y las variables de Ansible para el usuario nuevo.
                 # El playbook de usuario depende de ellas para resolver username y ssh_public_key.
-                run_script "generate-ansible-vars.sh" "Generar variables de Ansible"
+                run_script "05-generate-ansible-vars.sh" "Generar variables de Ansible"
                 
                 # Crear el usuario real en el servidor usando acceso root y luego validar acceso con la clave
-                run_script "bootstrap-user.sh" "Bootstrap del usuario"
+                run_script "06-bootstrap-user.sh" "Bootstrap del usuario"
                 
                 # Configurar SSH seguro una vez que el usuario ya existe y puede autenticarse por clave
-                run_script "secure-ssh.sh" "Securizar SSH"
+                run_script "07-secure-ssh.sh" "Securizar SSH"
                 
                 print_header "¡Configuración Completada!"
                 
@@ -254,7 +254,7 @@ while true; do
                 load_ssh_agent
                 
                 # Solo ejecutar scripts de bootstrap
-                run_script "bootstrap-user.sh" "Bootstrap del usuario"
+                run_script "06-bootstrap-user.sh" "Bootstrap del usuario"
                 
                 print_success "El servidor está listo para provisionar aplicaciones"
                 echo
@@ -284,7 +284,7 @@ while true; do
             read -rp "¿Deseas ejecutar la configuración interactiva? [s/n]: " confirm
             
             if [[ "$confirm" =~ ^[sS]$ ]]; then
-                run_script "interactive-setup.sh" "Editar configuración"
+                run_script "02-interactive-setup.sh" "Editar configuración"
             fi
             ;;
             
@@ -304,7 +304,7 @@ done
 # CONFIGURACIÓN POSTERIOR
 # ============================================================
 
-run_script "setup-base.sh"
+run_script "90-setup-base.sh"
 
 # ------------------------------------------------------------
 # Final

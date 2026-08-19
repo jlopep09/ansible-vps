@@ -3,7 +3,9 @@
 set -euo pipefail
 
 # Ajusta permisos para que el proyecto funcione en Ubuntu
-chmod +x ./run.sh ./provision.sh ./scripts/*.sh 2>/dev/null || true
+chmod +x ./run.sh ./provision.sh ./permisos.sh 2>/dev/null || true
+chmod +x ./scripts/bash/run/*.sh 2>/dev/null || true
+chmod +x ./scripts/bash/provision/*.sh 2>/dev/null || true
 chmod 700 ./private 2>/dev/null || true
 chmod 600 ./private/* 2>/dev/null || true
 chmod 644 ./private/*.pub 2>/dev/null || true

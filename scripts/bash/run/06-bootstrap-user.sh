@@ -9,8 +9,8 @@ PLAYBOOK="$ANSIBLE_DIR/playbooks/user.yml"
 
 # Cargar funciones de ssh-agent
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=ssh-agent-utils.sh
-source "$SCRIPT_DIR/ssh-agent-utils.sh"
+# shellcheck source=00-ssh-agent-utils.sh
+source "$SCRIPT_DIR/00-ssh-agent-utils.sh"
 
 # ============================================================
 # FUNCIONES
@@ -74,7 +74,7 @@ chmod 600 "$SSH_PRIVATE_KEY"
 # antes de ejecutarlo. El playbook depende de username y ssh_public_key en ansible/group_vars/user.yml.
 if [[ ! -f "$ANSIBLE_DIR/group_vars/user.yml" ]] || ! grep -q 'username:' "$ANSIBLE_DIR/group_vars/user.yml"; then
     echo "[INFO] Generando variables de Ansible para el playbook de usuario..."
-    "$SCRIPT_DIR/generate-ansible-vars.sh"
+    "$SCRIPT_DIR/05-generate-ansible-vars.sh"
 fi
 
 # Asegurar que el inventario final no quede en un estado antiguo antes del bootstrap

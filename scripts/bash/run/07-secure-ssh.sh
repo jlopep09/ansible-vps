@@ -9,8 +9,8 @@ PLAYBOOK="$ANSIBLE_DIR/playbooks/ssh.yml"
 
 # Cargar funciones de ssh-agent
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=ssh-agent-utils.sh
-source "$SCRIPT_DIR/ssh-agent-utils.sh"
+# shellcheck source=00-ssh-agent-utils.sh
+source "$SCRIPT_DIR/00-ssh-agent-utils.sh"
 
 # ============================================================
 # FUNCIONES
